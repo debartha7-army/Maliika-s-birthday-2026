@@ -3,7 +3,7 @@
  */
 import { supabase } from './supabase';
 
-const API_BASE = '/api';
+const API_BASE = (import.meta.env.VITE_BACKEND_URL ? import.meta.env.VITE_BACKEND_URL.replace(/\/+$/, '') : '') + '/api';
 
 export async function checkBackendHealth() {
   try {
