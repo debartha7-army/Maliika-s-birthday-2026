@@ -30,15 +30,19 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Serve frontend build if deployed together
+// Serve frontend build if deployed together (Express 5 compatible catch-all)
 const frontendDist = path.join(__dirname, '../frontend/dist');
 if (fs.existsSync(frontendDist)) {
   app.use(express.static(frontendDist));
-  app.get('*', (req, res, next) => {
-    if (req.path.startsWith('/api')) return next();
-    res.sendFile(path.join(frontendDist, 'index.html'));
-  });
 }
+
+// Single Page Application fallback for any non-API GET request
+app.use((req, res, next) => {
+  if (req.method === 'GET' && !req.path.startsWith('/api') && fs.existsSync(frontendDist)) {
+    return res.sendFile(path.join(frontendDist, 'index.html'));
+  }
+  next();
+});
 
 app.listen(PORT, () => {
   console.log(`✨ Birthday Surprise Backend running on http://localhost:${PORT}`);
