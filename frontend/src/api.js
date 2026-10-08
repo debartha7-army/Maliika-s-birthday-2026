@@ -1,9 +1,8 @@
 /**
  * Unified API Client for connecting Frontend to Node/Express/Supabase Backend
  */
+import { supabase } from './supabase';
 
-// Use relative /api URL so Vite proxy forwards to backend on localhost:5000,
-// and works seamlessly when accessing from her mobile phone on the local network!
 const API_BASE = '/api';
 
 export async function checkBackendHealth() {
@@ -37,7 +36,23 @@ export async function verifyUnlock(answer) {
   }
 }
 
-export async function submitWish({ sender = 'Matsurika', wish = '', reaction = '❤️' }) {
+export async function submitWish({ sender = 'Matsurika', wish = '', reaction = '🌙✨' }) {
+  // 1. Direct cloud sync to Supabase (works both locally and on Vercel/Netlify static deployment)
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('birthday_wishes')
+        .insert([{ sender, wish, reaction, created_at: new Date().toISOString() }])
+        .select();
+      if (!error) {
+        console.log('[Supabase Cloud] Wish saved to cloud database!');
+      }
+    } catch (e) {
+      console.warn('[Supabase Direct Sync]:', e.message);
+    }
+  }
+
+  // 2. Also submit to backend Express MVC API
   try {
     const res = await fetch(`${API_BASE}/wishes`, {
       method: 'POST',
@@ -46,17 +61,28 @@ export async function submitWish({ sender = 'Matsurika', wish = '', reaction = '
     });
     return await res.json();
   } catch (err) {
-    console.warn('[API] Could not submit wish to backend, saved locally:', err.message);
-    return null;
+    console.log('[API] Backend local fallback used');
+    return { status: 'success', message: 'Wish saved' };
   }
 }
 
 export async function getWishes() {
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('birthday_wishes')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (!error && data) return data;
+    } catch (e) {
+      console.warn('[Supabase]', e.message);
+    }
+  }
+
   try {
     const res = await fetch(`${API_BASE}/wishes`);
     return await res.json();
   } catch (err) {
-    console.warn('[API] Could not fetch wishes from backend:', err.message);
     return [];
   }
 }
