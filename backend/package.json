@@ -1,11 +1,12 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Backend API for Matsurika's 19th Birthday",
+  "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "server": "node server.js",
+    "build": "echo 'Backend build successful'",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
